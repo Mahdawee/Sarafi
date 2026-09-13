@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+html[lang="fa"] body {
+  font-family: var(--font-vazir), Tahoma, Arial, sans-serif;
+}
+html[lang="en"] body {
+  font-family: var(--font-inter), Arial, sans-serif;
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; }
+
+/* ── Print ── */
+#print-root { display: none; }
+
+@media print {
+  #app-root { display: none !important; }
+  #print-root { display: block !important; }
+  body { background: #fff !important; }
+
+  .print-doc {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 8px;
+    color: #000;
+    font-size: 13px;
+  }
+  .print-head { text-align: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 8px; }
+  .print-head h1 { font-size: 22px; font-weight: 800; margin: 0; }
+  .print-head p { margin: 2px 0 0; font-size: 12px; }
+  .print-meta { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px; }
+  .print-table { width: 100%; border-collapse: collapse; }
+  .print-table th, .print-table td { border: 1px solid #000; padding: 6px 8px; text-align: start; }
+  .print-table th { background: #eee !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .print-detail { font-size: 12px; margin-top: 2px; }
+  .print-amount { white-space: nowrap; font-weight: 700; }
+  .print-sign { display: flex; justify-content: space-between; margin-top: 56px; }
+  .print-sign div { border-top: 1px solid #000; padding-top: 4px; min-width: 180px; text-align: center; font-size: 12px; }
+  .print-footer { text-align: center; margin-top: 16px; font-size: 12px; }
+}
