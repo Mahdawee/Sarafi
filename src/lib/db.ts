@@ -6,7 +6,6 @@ const DB_DIR = path.join(process.cwd(), "data");
 const DB_PATH = path.join(DB_DIR, "sarafi.db");
 
 declare global {
-  // eslint-disable-next-line no-var
   var __sarafiDb: Database.Database | undefined;
 }
 
@@ -193,6 +192,26 @@ function initSchema(db: Database.Database) {
   );
   CREATE INDEX IF NOT EXISTS idx_tr_voucher ON transfers(voucher_no);
 
+  -- General double-entry journal. Account references deliberately support both
+  -- customer/agent accounts and physical safe/bank accounts.
+  CREATE TABLE IF NOT EXISTS journal_entries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    voucher_no TEXT NOT NULL,
+    date TEXT NOT NULL,
+    debit_account_type TEXT NOT NULL CHECK(debit_account_type IN ('customer', 'safe')),
+    debit_account_id INTEGER NOT NULL,
+    credit_account_type TEXT NOT NULL CHECK(credit_account_type IN ('customer', 'safe')),
+    credit_account_id INTEGER NOT NULL,
+    currency TEXT NOT NULL,
+    amount REAL NOT NULL,
+    description TEXT DEFAULT '',
+    is_commission INTEGER DEFAULT 0,
+    is_suspicious INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_journal_voucher ON journal_entries(voucher_no);
+  CREATE INDEX IF NOT EXISTS idx_journal_date ON journal_entries(date, id);
+
   CREATE TABLE IF NOT EXISTS rate_history (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     date TEXT NOT NULL,
@@ -208,7 +227,35 @@ function initSchema(db: Database.Database) {
   );
   `);
 
+  // SQLite CREATE TABLE IF NOT EXISTS does not add new columns to installations
+  // which already have the first version of the database.  Keep these small,
+  // idempotent migrations here so an existing Sarafi file upgrades safely.
+  ensureColumn(db, "customers", "father_name", "father_name TEXT DEFAULT ''");
+  ensureColumn(db, "customers", "national_id", "national_id TEXT DEFAULT ''");
+  ensureColumn(db, "customers", "email", "email TEXT DEFAULT ''");
+  ensureColumn(db, "hawala", "sent_currency", "sent_currency TEXT DEFAULT ''");
+  ensureColumn(db, "hawala", "sent_amount", "sent_amount REAL DEFAULT 0");
+  ensureColumn(db, "hawala", "received_currency", "received_currency TEXT DEFAULT ''");
+  ensureColumn(db, "hawala", "received_amount", "received_amount REAL DEFAULT 0");
+  ensureColumn(db, "hawala", "exchange_rate", "exchange_rate REAL DEFAULT 0");
+  ensureColumn(db, "hawala", "from_account_type", "from_account_type TEXT DEFAULT ''");
+  ensureColumn(db, "hawala", "from_account_id", "from_account_id INTEGER DEFAULT 0");
+  ensureColumn(db, "hawala", "to_account_type", "to_account_type TEXT DEFAULT ''");
+  ensureColumn(db, "hawala", "to_account_id", "to_account_id INTEGER DEFAULT 0");
+  ensureColumn(db, "hawala", "received_commission", "received_commission REAL DEFAULT 0");
+  ensureColumn(db, "hawala", "paid_commission", "paid_commission REAL DEFAULT 0");
+  ensureColumn(db, "hawala", "commission_currency", "commission_currency TEXT DEFAULT ''");
+  ensureColumn(db, "hawala", "payment_method", "payment_method TEXT DEFAULT 'cash'");
+  ensureColumn(db, "hawala", "verification_status", "verification_status TEXT DEFAULT 'confirmed'");
+
   seed(db);
+}
+
+function ensureColumn(db: Database.Database, table: string, column: string, definition: string) {
+  const columns = db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[];
+  if (!columns.some((c) => c.name === column)) {
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${definition}`);
+  }
 }
 
 function seed(db: Database.Database) {
@@ -328,6 +375,52 @@ export function addSafeMove(db: Database.Database, m: SafeMoveInput) {
     m.ref_type,
     m.ref_id ?? 0
   );
+}
+
+export type AccountType = "customer" | "safe";
+
+/**
+ * Post one side of a general-journal entry.  Customer balances live in the
+ * ledger; physical cash/bank balances live in safe_movements.  A debit on a
+ * safe raises its balance, while a credit lowers it.
+ */
+export function addAccountPosting(db: Database.Database, input: {
+  voucher_no: string;
+  date: string;
+  account_type: AccountType;
+  account_id: number;
+  side: "debit" | "credit";
+  currency: string;
+  amount: number;
+  description?: string;
+  ref_type: string;
+  ref_id?: number;
+}) {
+  if (!input.account_id || !input.amount) return;
+  if (input.account_type === "customer") {
+    addLedger(db, {
+      voucher_no: input.voucher_no,
+      date: input.date,
+      customer_id: input.account_id,
+      currency: input.currency,
+      debit: input.side === "debit" ? input.amount : 0,
+      credit: input.side === "credit" ? input.amount : 0,
+      description: input.description,
+      ref_type: input.ref_type,
+      ref_id: input.ref_id,
+    });
+    return;
+  }
+  addSafeMove(db, {
+    voucher_no: input.voucher_no,
+    date: input.date,
+    safe_id: input.account_id,
+    currency: input.currency,
+    amount: input.side === "debit" ? input.amount : -input.amount,
+    description: input.description,
+    ref_type: input.ref_type,
+    ref_id: input.ref_id,
+  });
 }
 
 /** Delete all ledger + safe rows linked to a ref (used when deleting a single row). */

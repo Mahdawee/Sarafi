@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import { ArrowDownCircle, ArrowUpCircle, Plus, Trash2 } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, Trash2 } from "lucide-react";
 import { useLang } from "@/lib/i18n";
 import { apiDelete, apiGet, apiPost } from "@/lib/api";
 import { formatDate, formatMoney, parseNum, todayISO } from "@/lib/format";
+import { useQuickEntry } from "@/lib/quick-entry";
 import type { Receipt } from "@/lib/types";
 import { Badge, Btn, Confirm, DateInput, Empty, Field, NumInput, PageHeader, SearchBox, Segmented, Spinner, Tbl, TextInput } from "@/components/ui";
 import { CurrencyPicker, CustomerPicker, SafePicker } from "@/components/pickers";
@@ -35,6 +36,8 @@ export default function ReceiptsPage() {
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [kindFilter, setKindFilter] = useState<"" | "receive" | "pay">("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
 
   const [modal, setModal] = useState(false);
   const [defKind, setDefKind] = useState<"receive" | "pay">("receive");
@@ -48,6 +51,8 @@ export default function ReceiptsPage() {
       const sp = new URLSearchParams();
       if (kindFilter) sp.set("kind", kindFilter);
       if (q) sp.set("q", q);
+      if (from) sp.set("from", from);
+      if (to) sp.set("to", to);
       const d = await apiGet<{ receipts: Receipt[] }>(`/api/receipts?${sp}`);
       setRows(d.receipts);
     } catch (e) {
@@ -55,7 +60,7 @@ export default function ReceiptsPage() {
     } finally {
       setLoading(false);
     }
-  }, [q, kindFilter, toast, t]);
+  }, [q, kindFilter, from, to, toast, t]);
 
   useEffect(() => {
     const timer = setTimeout(load, 250);
@@ -67,6 +72,8 @@ export default function ReceiptsPage() {
     setEntry([{ ...blank(kind), safe_id: safes[0]?.id ?? 0 }]);
     setModal(true);
   };
+
+  useQuickEntry("receipt-receive", () => openModal("receive"));
 
   const submit = async () => {
     for (const [i, r] of entry.entries()) {
@@ -125,7 +132,7 @@ export default function ReceiptsPage() {
         }
       />
 
-      <div className="mb-3 flex flex-wrap items-center gap-2">
+      <div className="mb-3 flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
         <SearchBox value={q} onChange={setQ} className="min-w-52 flex-1" />
         <Segmented
           value={kindFilter}
@@ -136,6 +143,8 @@ export default function ReceiptsPage() {
             { value: "pay", label: t("payReceipt") },
           ]}
         />
+        <DateInput value={from} onChange={(e) => setFrom(e.target.value)} className="w-auto" title={t("from")} />
+        <DateInput value={to} onChange={(e) => setTo(e.target.value)} className="w-auto" title={t("to")} />
       </div>
 
       {loading ? <Spinner /> : rows.length === 0 ? <Empty /> : (

@@ -17,6 +17,7 @@ interface VoucherData {
   exchanges: Record<string, unknown>[];
   expenses: Record<string, unknown>[];
   transfers: Record<string, unknown>[];
+  journal: Record<string, unknown>[];
 }
 
 function num(v: unknown): number {
@@ -55,13 +56,20 @@ export function PrintVoucherButton({ voucherNo, size = "sm" }: { voucherNo: stri
   if (data) {
     for (const h of data.hawala) {
       const isSend = str(h.kind) === "send";
+      const sentCurrency = str(h.sent_currency) || str(h.currency);
+      const sentAmount = num(h.sent_amount) || num(h.amount);
+      const receivedCurrency = str(h.received_currency) || sentCurrency;
+      const receivedAmount = num(h.received_amount) || sentAmount;
       rows.push({
         label: isSend ? t("sendHawala") : t("receiveHawala"),
-        detail: `${t("sender")}: ${str(h.sender_name)} ← ${t("receiver")}: ${str(h.receiver_name)}${str(h.secret) ? ` • ${t("secret")}: ${str(h.secret)}` : ""}${str(h.note) ? ` • ${str(h.note)}` : ""}`,
-        amount: formatMoney(num(h.amount), str(h.currency), locale),
+        detail: `${t("sender")}: ${str(h.sender_name)} ← ${t("receiver")}: ${str(h.receiver_name)}${str(h.from_account_name) ? ` • ${t("fromAccount")}: ${str(h.from_account_name)}` : ""}${str(h.to_account_name) ? ` • ${t("toAccount")}: ${str(h.to_account_name)}` : ""}${num(h.exchange_rate) ? ` • ${t("exchangeRate")}: ${num(h.exchange_rate)}` : ""}${str(h.secret) ? ` • ${t("secret")}: ${str(h.secret)}` : ""}${str(h.note) ? ` • ${str(h.note)}` : ""}`,
+        amount: `${formatMoney(sentAmount, sentCurrency, locale)} → ${formatMoney(receivedAmount, receivedCurrency, locale)}`,
       });
-      if (num(h.fee) > 0)
-        rows.push({ label: t("fee"), detail: "", amount: formatMoney(num(h.fee), str(h.currency), locale) });
+      const receivedCommission = num(h.received_commission) || num(h.fee);
+      if (receivedCommission > 0)
+        rows.push({ label: t("receivedCommission"), detail: "", amount: formatMoney(receivedCommission, str(h.commission_currency) || sentCurrency, locale) });
+      if (num(h.paid_commission) > 0)
+        rows.push({ label: t("paidCommission"), detail: "", amount: formatMoney(num(h.paid_commission), str(h.commission_currency) || sentCurrency, locale) });
     }
     for (const r of data.receipts) {
       rows.push({
@@ -98,10 +106,17 @@ export function PrintVoucherButton({ voucherNo, size = "sm" }: { voucherNo: stri
         amount: formatMoney(num(x.amount), str(x.currency), locale),
       });
     }
+    for (const j of data.journal) {
+      rows.push({
+        label: t("journalEntry"),
+        detail: `${t("debitAccount")}: ${str(j.debit_account_name)} • ${t("creditAccount")}: ${str(j.credit_account_name)}${str(j.description) ? ` • ${str(j.description)}` : ""}`,
+        amount: formatMoney(num(j.amount), str(j.currency), locale),
+      });
+    }
   }
   const firstDate = data ? str(
     data.hawala[0]?.date ?? data.receipts[0]?.date ?? data.dc[0]?.date ??
-    data.exchanges[0]?.date ?? data.expenses[0]?.date ?? data.transfers[0]?.date
+    data.exchanges[0]?.date ?? data.expenses[0]?.date ?? data.transfers[0]?.date ?? data.journal[0]?.date
   ) : "";
 
   return (

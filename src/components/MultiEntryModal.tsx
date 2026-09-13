@@ -68,12 +68,12 @@ export default function MultiEntryModal<T>({
         </div>
       }
     >
-      <p className="mb-3 rounded-xl bg-emerald-50 px-3 py-2 text-xs text-emerald-700">{t("multiHint")}</p>
+      <p className="mb-3 rounded-xl border border-cyan-100 bg-cyan-50 px-3 py-2 text-xs font-medium text-cyan-800">{t("multiHint")}</p>
       <div className="space-y-3">
         {rows.map((row, idx) => (
-          <div key={idx} className="relative rounded-2xl border border-slate-200 bg-slate-50/60 p-3 pt-4">
+          <div key={idx} className="relative rounded-2xl border border-slate-200 bg-slate-50/80 p-3 pt-4 shadow-sm shadow-slate-100">
             <div className="absolute -top-2.5 start-3 flex items-center gap-1.5">
-              <span className="rounded-full bg-slate-800 px-2.5 py-0.5 text-[11px] font-bold text-white">
+              <span className="rounded-full bg-[#11192f] px-2.5 py-0.5 text-[11px] font-bold text-white">
                 {t("row")} {locale === "fa" ? (idx + 1).toLocaleString("fa-AF") : idx + 1}
               </span>
             </div>

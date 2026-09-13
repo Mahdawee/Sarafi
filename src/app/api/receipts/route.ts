@@ -44,13 +44,14 @@ export async function POST(req: NextRequest) {
     if (r.kind !== "receive" && r.kind !== "pay")
       return NextResponse.json({ error: `Row ${i + 1}: invalid kind` }, { status: 400 });
   }
-  const voucher_no = nextVoucher(db, "RC");
+  let voucher_no = "";
   const today = todayISO();
   const ids: number[] = [];
   const insert = db.prepare(
     "INSERT INTO receipts (voucher_no, kind, date, customer_id, safe_id, currency, amount, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
   );
   const tx = db.transaction(() => {
+    voucher_no = nextVoucher(db, "RC");
     for (const r of b.rows) {
       const date = r.date || today;
       const info = insert.run(voucher_no, r.kind, date, r.customer_id, r.safe_id, r.currency, r.amount, r.description?.trim() ?? "");

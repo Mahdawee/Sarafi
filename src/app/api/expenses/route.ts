@@ -29,11 +29,12 @@ export async function POST(req: NextRequest) {
     if (!r.safe_id || !r.currency || !r.amount || r.amount <= 0)
       return NextResponse.json({ error: `Row ${i + 1}: all fields are required` }, { status: 400 });
   }
-  const voucher_no = nextVoucher(db, "EP");
+  let voucher_no = "";
   const today = todayISO();
   const ids: number[] = [];
   const insert = db.prepare("INSERT INTO expenses (voucher_no, date, category, safe_id, currency, amount, description) VALUES (?, ?, ?, ?, ?, ?, ?)");
   const tx = db.transaction(() => {
+    voucher_no = nextVoucher(db, "EP");
     for (const r of b.rows) {
       const date = r.date || today;
       const info = insert.run(voucher_no, date, r.category?.trim() ?? "", r.safe_id, r.currency, r.amount, r.description?.trim() ?? "");

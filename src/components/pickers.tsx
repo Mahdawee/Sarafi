@@ -5,13 +5,14 @@ import { Plus } from "lucide-react";
 import { useLang } from "@/lib/i18n";
 import { useData, useToast } from "./app-providers";
 import { apiPost } from "@/lib/api";
+import type { AccountRef } from "@/lib/types";
 import { Btn, Field, Modal, Select, TextInput } from "./ui";
 
 // ── Customer picker with search + quick add ──
 export function CustomerPicker({ value, onChange, autoFocus }: {
   value: number; onChange: (id: number) => void; autoFocus?: boolean;
 }) {
-  const { t, locale } = useLang();
+  const { t } = useLang();
   const { customers, balances, refresh } = useData();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
@@ -151,6 +152,63 @@ export function SafePicker({ value, onChange, showBalances }: {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+// ── Unified account picker (customer/agent + cash/bank) ──
+// General journal rows must be able to address either kind of account.  The
+// selected value is explicit, so customer #1 and safe #1 can never collide.
+export function AccountPicker({
+  value,
+  onChange,
+  exclude,
+}: {
+  value: AccountRef | null;
+  onChange: (value: AccountRef | null) => void;
+  exclude?: AccountRef | null;
+}) {
+  const { t, locale } = useLang();
+  const { customers, safes, balances, safeBalances } = useData();
+  const valueKey = value ? `${value.type}:${value.id}` : "";
+  const excludedKey = exclude ? `${exclude.type}:${exclude.id}` : "";
+  const selectedName = value?.type === "customer"
+    ? customers.find((c) => c.id === value.id)?.name
+    : value?.type === "safe" ? safes.find((s) => s.id === value.id)?.name : "";
+  const selectedBalance = value?.type === "customer"
+    ? Object.entries(balances[value.id] ?? {}).map(([currency, b]) => `${currency} ${Number(b.balance).toLocaleString()}`).join(" · ")
+    : value?.type === "safe" ? Object.entries(safeBalances[value.id] ?? {}).map(([currency, b]) => `${currency} ${Number(b).toLocaleString()}`).join(" · ") : "";
+
+  return (
+    <div>
+      <Select
+        value={valueKey}
+        onChange={(e) => {
+          if (!e.target.value) return onChange(null);
+          const [type, id] = e.target.value.split(":");
+          onChange({ type: type as AccountRef["type"], id: Number(id) });
+        }}
+      >
+        <option value="">{locale === "fa" ? "انتخاب حساب..." : "Select account..."}</option>
+        <optgroup label={locale === "fa" ? "حساب مشتریان و نمایندگان" : "Customer & agent accounts"}>
+          {customers.map((c) => {
+            const key = `customer:${c.id}`;
+            return <option key={key} value={key} disabled={key === excludedKey}>{c.name} — {c.code}</option>;
+          })}
+        </optgroup>
+        <optgroup label={locale === "fa" ? "صندوق‌ها و بانک‌ها" : "Safes & banks"}>
+          {safes.map((s) => {
+            const key = `safe:${s.id}`;
+            return <option key={key} value={key} disabled={key === excludedKey}>{s.name}</option>;
+          })}
+        </optgroup>
+      </Select>
+      {selectedName && selectedBalance && (
+        <div className="mt-1 truncate text-[10px] font-semibold text-slate-400" dir="ltr" title={`${selectedName}: ${selectedBalance}`}>
+          {selectedBalance}
+        </div>
+      )}
+      {!selectedName && value && <div className="mt-1 text-[10px] text-rose-500">{t("noData")}</div>}
     </div>
   );
 }

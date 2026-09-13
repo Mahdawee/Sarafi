@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
-import { Vazirmatn, Inter } from "next/font/google";
+import "@fontsource-variable/vazirmatn";
+import "@fontsource-variable/inter";
 import "./globals.css";
 import { AppProviders } from "@/components/app-providers";
 import Shell from "@/components/Shell";
-
-const vazir = Vazirmatn({ subsets: ["arabic", "latin"], variable: "--font-vazir", display: "swap" });
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 
 export const metadata: Metadata = {
   title: "Sarafi | سیستم صرافی",
@@ -14,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fa" dir="rtl" className={`${vazir.variable} ${inter.variable}`}>
+    <html lang="fa" dir="rtl">
       <body className="min-h-screen bg-slate-100 text-slate-800 antialiased">
         <AppProviders>
           <Shell>{children}</Shell>

@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import { ArrowDownUp, Plus, Trash2 } from "lucide-react";
+import { ArrowDownUp, Trash2 } from "lucide-react";
 import { useLang } from "@/lib/i18n";
 import { apiDelete, apiGet, apiPost } from "@/lib/api";
 import { formatDate, formatMoney, parseNum, todayISO } from "@/lib/format";
+import { useQuickEntry } from "@/lib/quick-entry";
 import type { Exchange } from "@/lib/types";
 import { Badge, Btn, Confirm, DateInput, Empty, Field, NumInput, PageHeader, Segmented, Spinner, Tbl, TextInput } from "@/components/ui";
 import { CurrencyPicker, CustomerPicker, SafePicker } from "@/components/pickers";
@@ -37,6 +38,8 @@ export default function ExchangePage() {
   const [rows, setRows] = useState<Exchange[]>([]);
   const [loading, setLoading] = useState(true);
   const [kindFilter, setKindFilter] = useState<"" | "buy" | "sell">("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
 
   const [modal, setModal] = useState(false);
   const [defKind, setDefKind] = useState<"buy" | "sell">("buy");
@@ -49,6 +52,8 @@ export default function ExchangePage() {
     try {
       const sp = new URLSearchParams();
       if (kindFilter) sp.set("kind", kindFilter);
+      if (from) sp.set("from", from);
+      if (to) sp.set("to", to);
       const d = await apiGet<{ exchanges: Exchange[] }>(`/api/exchanges?${sp}`);
       setRows(d.exchanges);
     } catch (e) {
@@ -56,9 +61,12 @@ export default function ExchangePage() {
     } finally {
       setLoading(false);
     }
-  }, [kindFilter, toast, t]);
+  }, [kindFilter, from, to, toast, t]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    const timer = window.setTimeout(() => { void load(); }, 0);
+    return () => window.clearTimeout(timer);
+  }, [load]);
 
   const rateFor = (code: string, kind: "buy" | "sell") => {
     const c = currencies.find((x) => x.code === code);
@@ -71,6 +79,8 @@ export default function ExchangePage() {
     setEntry([{ ...blank(kind), rate: rateFor("USD", kind), safe_foreign: safes[0]?.id ?? 0, safe_base: safes[0]?.id ?? 0 }]);
     setModal(true);
   };
+
+  useQuickEntry("exchange-buy", () => openModal("buy"));
 
   const submit = async () => {
     for (const [i, r] of entry.entries()) {
@@ -125,7 +135,7 @@ export default function ExchangePage() {
         }
       />
 
-      <div className="mb-3 flex flex-wrap items-center gap-2">
+      <div className="mb-3 flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
         <Segmented
           value={kindFilter}
           onChange={setKindFilter}
@@ -135,6 +145,8 @@ export default function ExchangePage() {
             { value: "sell", label: t("sellCurrency") },
           ]}
         />
+        <DateInput value={from} onChange={(e) => setFrom(e.target.value)} className="w-auto" title={t("from")} />
+        <DateInput value={to} onChange={(e) => setTo(e.target.value)} className="w-auto" title={t("to")} />
       </div>
 
       {loading ? <Spinner /> : rows.length === 0 ? <Empty /> : (

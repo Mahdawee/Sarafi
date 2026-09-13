@@ -34,7 +34,8 @@ export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id:
   const db = getDb();
   const { id } = await params;
   const used = db.prepare("SELECT COUNT(*) as c FROM safe_movements WHERE safe_id = ?").get(id) as { c: number };
-  if (used.c > 0) return NextResponse.json({ error: "HAS_TRANSACTIONS" }, { status: 400 });
+  const journalUsed = db.prepare("SELECT COUNT(*) as c FROM journal_entries WHERE (debit_account_type = 'safe' AND debit_account_id = ?) OR (credit_account_type = 'safe' AND credit_account_id = ?)").get(id, id) as { c: number };
+  if (used.c > 0 || journalUsed.c > 0) return NextResponse.json({ error: "HAS_TRANSACTIONS" }, { status: 400 });
   db.prepare("DELETE FROM safes WHERE id = ?").run(id);
   return NextResponse.json({ ok: true });
 }

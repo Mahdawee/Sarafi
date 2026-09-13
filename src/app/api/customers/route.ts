@@ -38,11 +38,15 @@ export async function POST(req: NextRequest) {
   const code = b.code?.trim() || nextVoucher(db, "C");
   try {
     const info = db
-      .prepare("INSERT INTO customers (code, name, phone, address, type, note) VALUES (?, ?, ?, ?, ?, ?)")
-      .run(code, b.name.trim(), b.phone?.trim() ?? "", b.address?.trim() ?? "", b.type ?? "customer", b.note?.trim() ?? "");
+      .prepare("INSERT INTO customers (code, name, phone, address, father_name, national_id, email, type, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
+      .run(
+        code, b.name.trim(), b.phone?.trim() ?? "", b.address?.trim() ?? "",
+        b.father_name?.trim() ?? "", b.national_id?.trim() ?? "", b.email?.trim() ?? "",
+        b.type ?? "customer", b.note?.trim() ?? ""
+      );
     const customer = db.prepare("SELECT * FROM customers WHERE id = ?").get(info.lastInsertRowid);
     return NextResponse.json({ customer }, { status: 201 });
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: "Could not create customer (duplicate code?)" }, { status: 400 });
   }
 }

@@ -13,5 +13,6 @@ export async function GET(req: NextRequest) {
   const exchanges = db.prepare(`SELECT e.*, c.name as customer_name FROM exchanges e LEFT JOIN customers c ON c.id = e.customer_id WHERE e.date = ? ORDER BY e.id`).all(date);
   const expenses = db.prepare(`SELECT e.*, s.name as safe_name FROM expenses e LEFT JOIN safes s ON s.id = e.safe_id WHERE e.date = ? ORDER BY e.id`).all(date);
   const transfers = db.prepare(`SELECT t.*, fs.name as from_safe_name, ts.name as to_safe_name FROM transfers t LEFT JOIN safes fs ON fs.id = t.from_safe LEFT JOIN safes ts ON ts.id = t.to_safe WHERE t.date = ? ORDER BY t.id`).all(date);
-  return NextResponse.json({ date, sends, receives, receipts, dc, exchanges, expenses, transfers });
+  const journal = db.prepare(`SELECT je.*, COALESCE(dc.name, ds.name, '') AS debit_account_name, COALESCE(cc.name, cs.name, '') AS credit_account_name FROM journal_entries je LEFT JOIN customers dc ON je.debit_account_type = 'customer' AND dc.id = je.debit_account_id LEFT JOIN safes ds ON je.debit_account_type = 'safe' AND ds.id = je.debit_account_id LEFT JOIN customers cc ON je.credit_account_type = 'customer' AND cc.id = je.credit_account_id LEFT JOIN safes cs ON je.credit_account_type = 'safe' AND cs.id = je.credit_account_id WHERE je.date = ? ORDER BY je.id`).all(date);
+  return NextResponse.json({ date, sends, receives, receipts, dc, exchanges, expenses, transfers, journal });
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import { MinusCircle, Plus, PlusCircle, Trash2 } from "lucide-react";
+import { MinusCircle, PlusCircle, Trash2 } from "lucide-react";
 import { useLang } from "@/lib/i18n";
 import { apiDelete, apiGet, apiPost } from "@/lib/api";
 import { formatDate, formatMoney, parseNum, todayISO } from "@/lib/format";
@@ -34,6 +34,8 @@ export default function DebitCreditPage() {
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [kindFilter, setKindFilter] = useState<"" | "debit" | "credit">("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
 
   const [modal, setModal] = useState(false);
   const [defKind, setDefKind] = useState<"debit" | "credit">("debit");
@@ -47,6 +49,8 @@ export default function DebitCreditPage() {
       const sp = new URLSearchParams();
       if (kindFilter) sp.set("kind", kindFilter);
       if (q) sp.set("q", q);
+      if (from) sp.set("from", from);
+      if (to) sp.set("to", to);
       const d = await apiGet<{ items: DebitCredit[] }>(`/api/debit-credit?${sp}`);
       setRows(d.items);
     } catch (e) {
@@ -54,7 +58,7 @@ export default function DebitCreditPage() {
     } finally {
       setLoading(false);
     }
-  }, [q, kindFilter, toast, t]);
+  }, [q, kindFilter, from, to, toast, t]);
 
   useEffect(() => {
     const timer = setTimeout(load, 250);
@@ -119,7 +123,7 @@ export default function DebitCreditPage() {
         }
       />
 
-      <div className="mb-3 flex flex-wrap items-center gap-2">
+      <div className="mb-3 flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
         <SearchBox value={q} onChange={setQ} className="min-w-52 flex-1" />
         <Segmented
           value={kindFilter}
@@ -130,6 +134,8 @@ export default function DebitCreditPage() {
             { value: "credit", label: t("credit") },
           ]}
         />
+        <DateInput value={from} onChange={(e) => setFrom(e.target.value)} className="w-auto" title={t("from")} />
+        <DateInput value={to} onChange={(e) => setTo(e.target.value)} className="w-auto" title={t("to")} />
       </div>
 
       {loading ? <Spinner /> : rows.length === 0 ? <Empty /> : (

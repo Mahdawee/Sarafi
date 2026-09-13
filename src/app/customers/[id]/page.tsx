@@ -1,31 +1,35 @@
 "use client";
 
-import React, { use, useCallback, useEffect, useState } from "react";
+import React, { use, useCallback, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { ArrowLeft, Printer } from "lucide-react";
 import { useLang } from "@/lib/i18n";
 import { apiGet } from "@/lib/api";
-import { formatDate, formatMoney, formatNumber, todayISO } from "@/lib/format";
+import { formatDate, formatNumber, todayISO } from "@/lib/format";
 import type { CustomerStatement } from "@/lib/types";
-import { Badge, Btn, Card, DateInput, Empty, PageHeader, Select, Spinner, Tbl } from "@/components/ui";
+import { Badge, Btn, DateInput, Empty, PageHeader, Select, Spinner, Tbl } from "@/components/ui";
 import { useData } from "@/components/app-providers";
 
 const REF_LABEL: Record<string, Record<string, string>> = {
   hawala_send: { fa: "حواله ارسالی", en: "Sent hawala" },
   hawala_receive: { fa: "حواله دریافتی", en: "Received hawala" },
+  hawala_cancel: { fa: "لغو حواله", en: "Hawala reversal" },
   receipt: { fa: "رسید", en: "Receipt" },
   debit_credit: { fa: "دبت/کردت", en: "Debit/Credit" },
   exchange: { fa: "ارز", en: "Exchange" },
+  journal: { fa: "روزنامه", en: "Journal" },
 };
 
 export default function StatementPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { t, locale } = useLang();
-  const { currencies } = useData();
+  const { currencies, settings } = useData();
   const [data, setData] = useState<CustomerStatement & { opening: Record<string, number> } | null>(null);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState(todayISO());
   const [currency, setCurrency] = useState("");
+  const [printing, setPrinting] = useState(false);
 
   const load = useCallback(async () => {
     const sp = new URLSearchParams();
@@ -36,12 +40,30 @@ export default function StatementPage({ params }: { params: Promise<{ id: string
     setData(d);
   }, [id, from, to, currency]);
 
-  useEffect(() => { load().catch(() => {}); }, [load]);
+  useEffect(() => {
+    const timer = window.setTimeout(() => { void load().catch(() => {}); }, 0);
+    return () => window.clearTimeout(timer);
+  }, [load]);
+
+  const entriesWithRunning = useMemo(() => {
+    if (!data || !currency) return data?.entries.map((entry) => ({ ...entry, running: 0 })) ?? [];
+    let running = data.opening[currency] ?? 0;
+    return data.entries.map((entry) => {
+      running += entry.credit - entry.debit;
+      return { ...entry, running };
+    });
+  }, [data, currency]);
 
   if (!data) return <Spinner />;
 
-  let running = currency ? (data.opening[currency] ?? 0) : 0;
   const showRunning = !!currency;
+  const printStatement = () => {
+    setPrinting(true);
+    window.setTimeout(() => {
+      window.print();
+      window.setTimeout(() => setPrinting(false), 400);
+    }, 120);
+  };
 
   return (
     <div>
@@ -53,7 +75,7 @@ export default function StatementPage({ params }: { params: Promise<{ id: string
             <Link href="/customers" className="inline-flex items-center gap-1 rounded-xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200">
               <ArrowLeft size={15} className="rtl:rotate-180" /> {t("nav_customers")}
             </Link>
-            <Btn variant="secondary" onClick={() => window.print()}><Printer size={15} /> {t("print")}</Btn>
+            <Btn variant="secondary" onClick={printStatement}><Printer size={15} /> {t("print")}</Btn>
           </>
         }
       />
@@ -88,8 +110,7 @@ export default function StatementPage({ params }: { params: Promise<{ id: string
               <td className="px-3 py-2 text-xs font-extrabold" dir="ltr">{formatNumber(data.opening[currency], locale)}</td>
             </tr>
           )}
-          {data.entries.map((e) => {
-            running += (e.credit - e.debit);
+          {entriesWithRunning.map((e) => {
             return (
               <tr key={e.id} className="hover:bg-slate-50">
                 <td className="whitespace-nowrap px-3 py-2 text-xs">{formatDate(e.date, locale)}</td>
@@ -99,11 +120,24 @@ export default function StatementPage({ params }: { params: Promise<{ id: string
                 <td className="px-3 py-2 text-xs font-bold" dir="ltr">{e.currency}</td>
                 <td className="whitespace-nowrap px-3 py-2 text-xs text-rose-600" dir="ltr">{e.debit ? formatNumber(e.debit, locale) : "—"}</td>
                 <td className="whitespace-nowrap px-3 py-2 text-xs text-emerald-600" dir="ltr">{e.credit ? formatNumber(e.credit, locale) : "—"}</td>
-                {showRunning && <td className="whitespace-nowrap px-3 py-2 text-xs font-extrabold" dir="ltr">{formatNumber(running, locale)}</td>}
+                {showRunning && <td className="whitespace-nowrap px-3 py-2 text-xs font-extrabold" dir="ltr">{formatNumber(e.running, locale)}</td>}
               </tr>
             );
           })}
         </Tbl>
+      )}
+
+      {printing && createPortal(
+        <div id="print-root" dir={locale === "fa" ? "rtl" : "ltr"}>
+          <div className="print-doc">
+            <div className="print-head"><h1>{locale === "fa" ? settings.company_fa : settings.company_en}</h1><p>{t("statement")} — {data.customer.name}</p></div>
+            <div className="print-meta"><span>{t("customerCode")}: <b dir="ltr">{data.customer.code}</b></span><span>{t("phone")}: <b dir="ltr">{data.customer.phone}</b></span></div>
+            <table className="print-table"><thead><tr><th>{t("date")}</th><th>{t("voucherNo")}</th><th>{t("description")}</th><th>{t("currency")}</th><th>{t("debit")}</th><th>{t("credit")}</th>{showRunning && <th>{t("balance")}</th>}</tr></thead><tbody>
+              {showRunning && (data.opening[currency] ?? 0) !== 0 && <tr><td colSpan={6}>{t("openingBalance")}</td><td>{formatNumber(data.opening[currency], locale)}</td></tr>}
+              {entriesWithRunning.map((entry) => <tr key={entry.id}><td>{formatDate(entry.date, locale)}</td><td dir="ltr">{entry.voucher_no}</td><td>{entry.description}</td><td dir="ltr">{entry.currency}</td><td>{entry.debit ? formatNumber(entry.debit, locale) : ""}</td><td>{entry.credit ? formatNumber(entry.credit, locale) : ""}</td>{showRunning && <td>{formatNumber(entry.running, locale)}</td>}</tr>)}
+            </tbody></table>
+          </div>
+        </div>, document.body
       )}
     </div>
   );

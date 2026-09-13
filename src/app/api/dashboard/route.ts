@@ -56,8 +56,20 @@ export async function GET() {
   pushRecent(db.prepare("SELECT voucher_no, date, sender_name, amount, currency FROM hawala WHERE kind='receive' ORDER BY id DESC LIMIT 5").all() as Record<string, unknown>[], "receive", "sender_name");
   pushRecent(db.prepare("SELECT voucher_no, date, description, amount, currency FROM receipts ORDER BY id DESC LIMIT 5").all() as Record<string, unknown>[], "receipt", "description");
   pushRecent(db.prepare("SELECT voucher_no, date, note, foreign_amount, foreign_currency FROM exchanges ORDER BY id DESC LIMIT 5").all() as Record<string, unknown>[], "exchange", "note");
+  pushRecent(db.prepare("SELECT voucher_no, date, description, amount, currency FROM journal_entries ORDER BY id DESC LIMIT 5").all() as Record<string, unknown>[], "journal", "description");
   recent.sort((a, b) => (a.date < b.date ? 1 : -1));
   const recentTop = recent.slice(0, 10);
+
+  // Keep the operational dashboard totals in their native currencies too.
+  // The AFN cards are convenient, but a money exchange must never lose the
+  // underlying amount simply by converting it for a summary.
+  const day_currency_totals: Record<string, { sent: number; received: number; cash_in: number; cash_out: number; fees: number }> = {};
+  const daily = (currency: string) => (day_currency_totals[currency] ??= { sent: 0, received: 0, cash_in: 0, cash_out: 0, fees: 0 });
+  for (const r of sendRows) daily(r.currency).sent += r.amount;
+  for (const r of recvRows) daily(r.currency).received += r.amount;
+  for (const r of feeRows) daily(r.currency).fees += r.fee ?? 0;
+  for (const r of inRows) daily(r.currency).cash_in += r.amount;
+  for (const r of outRows) daily(r.currency).cash_out += r.amount;
 
   const custSums = db.prepare("SELECT currency, SUM(debit) as debit, SUM(credit) as credit FROM ledger GROUP BY currency").all() as { currency: string; debit: number; credit: number }[];
   const customerTotals: Record<string, { debit: number; credit: number }> = {};
@@ -78,6 +90,7 @@ export async function GET() {
       fees_afn: Math.round(feeRows.reduce((t, r) => t + toAfn(r.currency, r.fee ?? 0), 0)),
       _check: scalar("SELECT COUNT(*) as v FROM hawala"),
     },
+    day_currency_totals,
     pending: { send: pendingSend, receive: pendingRecv },
     recent: recentTop,
     customerTotals,

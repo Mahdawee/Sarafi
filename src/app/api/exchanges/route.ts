@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     if (!r.safe_foreign || !r.safe_base)
       return NextResponse.json({ error: `Row ${i + 1}: both safes are required` }, { status: 400 });
   }
-  const voucher_no = nextVoucher(db, "EX");
+  let voucher_no = "";
   const today = todayISO();
   const ids: number[] = [];
   const getRate = db.prepare("SELECT buy_rate, sell_rate FROM currencies WHERE code = ?");
@@ -53,6 +53,7 @@ export async function POST(req: NextRequest) {
     (voucher_no, kind, date, customer_id, foreign_currency, foreign_amount, rate, base_amount, safe_foreign, safe_base, profit, note)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   const tx = db.transaction(() => {
+    voucher_no = nextVoucher(db, "EX");
     for (const r of b.rows) {
       const date = r.date || today;
       const base_amount = Math.round(r.foreign_amount * r.rate * 100) / 100;

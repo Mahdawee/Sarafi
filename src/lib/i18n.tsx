@@ -7,6 +7,8 @@ const dict = {
   // ── Navigation ──
   appName: { fa: "سیستم صرافی", en: "Sarafi System" },
   nav_dashboard: { fa: "داشبورد", en: "Dashboard" },
+  nav_journal: { fa: "روزنامه", en: "Journal" },
+  nav_balance_sheet: { fa: "ترازنامه", en: "Trial Balance" },
   nav_hawala_send: { fa: "حواله‌های ارسالی", en: "Sent Hawala" },
   nav_hawala_receive: { fa: "حواله‌های دریافتی", en: "Received Hawala" },
   nav_receipts: { fa: "رسیدها", en: "Receipts" },
@@ -17,6 +19,11 @@ const dict = {
   nav_expenses: { fa: "مصارف", en: "Expenses" },
   nav_reports: { fa: "گزارشات", en: "Reports" },
   nav_settings: { fa: "تنظیمات", en: "Settings" },
+  nav_group_operations: { fa: "ثبت معامله", en: "Transactions" },
+  nav_group_accounts: { fa: "حساب‌ها", en: "Accounts" },
+  nav_group_hawala: { fa: "مدیریت حواله", en: "Hawala" },
+  nav_group_finance: { fa: "مالی و گزارشات", en: "Finance & Reports" },
+  nav_group_system: { fa: "سیستم", en: "System" },
 
   // ── Common ──
   save: { fa: "ثبت", en: "Save" },
@@ -59,6 +66,9 @@ const dict = {
   note: { fa: "یادداشت", en: "Note" },
   phone: { fa: "تلفن", en: "Phone" },
   address: { fa: "آدرس", en: "Address" },
+  email: { fa: "ایمیل", en: "Email" },
+  fatherName: { fa: "نام پدر", en: "Father name" },
+  nationalId: { fa: "نمبر تذکره", en: "National ID" },
   name: { fa: "نام", en: "Name" },
   type: { fa: "نوع", en: "Type" },
   balance: { fa: "بیلانس", en: "Balance" },
@@ -71,6 +81,20 @@ const dict = {
   filter: { fa: "فلتر", en: "Filter" },
   export: { fa: "خروجی", en: "Export" },
   refresh: { fa: "تازه‌سازی", en: "Refresh" },
+  account: { fa: "حساب", en: "Account" },
+  fromAccount: { fa: "از حساب", en: "From account" },
+  toAccount: { fa: "به حساب", en: "To account" },
+  debitAccount: { fa: "حساب دبت", en: "Debit account" },
+  creditAccount: { fa: "حساب کردت", en: "Credit account" },
+  transaction: { fa: "معامله", en: "Transaction" },
+  quickEntry: { fa: "ثبت سریع", en: "Quick entry" },
+  quickEntryHint: { fa: "نوع معامله را انتخاب کنید", en: "Choose a transaction type" },
+  reference: { fa: "مرجع", en: "Reference" },
+  confirmed: { fa: "تأیید شده", en: "Confirmed" },
+  cash: { fa: "نقد", en: "Cash" },
+  onAccount: { fa: "حسابی", en: "On account" },
+  suspicious: { fa: "مشکوک", en: "Suspicious" },
+  commissionRelated: { fa: "مربوط کمیشن", en: "Commission related" },
 
   // ── Dashboard ──
   welcome: { fa: "خلاصه وضعیت صرافی", en: "Exchange overview" },
@@ -119,6 +143,18 @@ const dict = {
   receiveHawala: { fa: "حواله دریافتی", en: "Received Hawala" },
   payNow: { fa: "پرداخت همزمان از صندوق", en: "Pay now from safe" },
   totalWithFee: { fa: "جمع با کمیشن", en: "Total with fee" },
+  sentAmount: { fa: "مبلغ ارسالی", en: "Sent amount" },
+  receivedAmount: { fa: "مبلغ دریافتی", en: "Received amount" },
+  sentCurrency: { fa: "واحد پول ارسالی", en: "Sent currency" },
+  receivedCurrency: { fa: "واحد پول دریافتی", en: "Received currency" },
+  exchangeRate: { fa: "نرخ تبادله", en: "Exchange rate" },
+  receivedCommission: { fa: "کمیشن دریافتی", en: "Commission received" },
+  paidCommission: { fa: "کمیشن پرداختی", en: "Commission paid" },
+  paymentMethod: { fa: "نحوه پرداخت", en: "Payment method" },
+  verification: { fa: "وضعیت تأیید", en: "Verification" },
+  hawalaAmounts: { fa: "مبالغ حواله", en: "Hawala amounts" },
+  hawalaAccounts: { fa: "حساب‌های حواله", en: "Hawala accounts" },
+  hawalaParties: { fa: "معلومات فرستنده و گیرنده", en: "Sender & receiver details" },
 
   // ── Receipts ──
   newReceipt: { fa: "رسید جدید", en: "New Receipt" },
@@ -160,6 +196,8 @@ const dict = {
   statement: { fa: "صورت حساب", en: "Statement" },
   viewStatement: { fa: "مشاهده صورت حساب", en: "View statement" },
   openingBalance: { fa: "بیلانس ابتدایی", en: "Opening balance" },
+  openingDebit: { fa: "دبت ابتدایی", en: "Opening debit" },
+  openingCredit: { fa: "کردت ابتدایی", en: "Opening credit" },
 
   // ── Safes ──
   newSafe: { fa: "صندوق جدید", en: "New Safe" },
@@ -185,6 +223,21 @@ const dict = {
   cat_utility: { fa: "برق / آب / اینترنت", en: "Utilities" },
   cat_other: { fa: "متفرقه", en: "Other" },
 
+  // ── Journal and balance sheet ──
+  journal: { fa: "دفتر روزنامه", en: "General Journal" },
+  newJournal: { fa: "ثبت روزنامه جدید", en: "New journal entry" },
+  journalHint: { fa: "هر سطر یک دبت و یک کردت هم‌مبلغ است؛ چند سطر را در یک سند ثبت کنید.", en: "Each line posts an equal debit and credit; save multiple lines in one voucher." },
+  journalEntry: { fa: "ثبت روزنامه", en: "Journal entry" },
+  trialBalance: { fa: "تراز آزمایشی", en: "Trial balance" },
+  trialBalanceHint: { fa: "مانده تمام حساب‌ها تا تاریخ انتخاب‌شده، بدون مخلوط کردن ارزها.", en: "All account balances as of the selected date, kept in their original currencies." },
+  accountType: { fa: "نوع حساب", en: "Account type" },
+  accountCustomer: { fa: "مشتری / نماینده", en: "Customer / agent" },
+  accountSafe: { fa: "صندوق / بانک", en: "Safe / bank" },
+  balanceSide: { fa: "مانده", en: "Balance" },
+  asOfDate: { fa: "تا تاریخ", en: "As of date" },
+  debitTotal: { fa: "مجموع دبت", en: "Total debit" },
+  creditTotal: { fa: "مجموع کردت", en: "Total credit" },
+
   // ── Reports ──
   dailyReport: { fa: "گزارش روزانه", en: "Daily Report" },
   profitReport: { fa: "گزارش مفاد و ضرر", en: "Profit & Loss" },
@@ -192,6 +245,7 @@ const dict = {
   hawalaReport: { fa: "گزارش حواله‌ها", en: "Hawala Report" },
   totalFees: { fa: "مجموع کمیشن حواله‌ها", en: "Total hawala fees" },
   totalExchangeProfit: { fa: "مجموع مفاد ارز", en: "Total exchange profit" },
+  paidCommissions: { fa: "مجموع کمیشن پرداختی", en: "Paid commissions" },
   totalExpenses: { fa: "مجموع مصارف", en: "Total expenses" },
   netProfit: { fa: "مفاد خالص", en: "Net profit" },
   dateRange: { fa: "محدوده تاریخ", en: "Date range" },
@@ -239,8 +293,13 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>("fa");
 
   useEffect(() => {
-    const saved = localStorage.getItem("sarafi-lang");
-    if (saved === "en" || saved === "fa") setLocaleState(saved);
+    // Defer the persisted preference read until after hydration. This preserves
+    // the server's Dari first paint and avoids a synchronous effect render.
+    const timer = window.setTimeout(() => {
+      const saved = localStorage.getItem("sarafi-lang");
+      if (saved === "en" || saved === "fa") setLocaleState(saved);
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {

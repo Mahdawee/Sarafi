@@ -22,7 +22,7 @@ export default function CustomersPage() {
   const [q, setQ] = useState("");
   const [modal, setModal] = useState(false);
   const [editing, setEditing] = useState<Customer | null>(null);
-  const [form, setForm] = useState({ name: "", phone: "", address: "", type: "customer", note: "" });
+  const [form, setForm] = useState({ name: "", father_name: "", phone: "", national_id: "", email: "", address: "", type: "customer", note: "" });
   const [saving, setSaving] = useState(false);
   const [confirm, setConfirm] = useState<Customer | null>(null);
 
@@ -47,12 +47,12 @@ export default function CustomersPage() {
 
   const openAdd = () => {
     setEditing(null);
-    setForm({ name: "", phone: "", address: "", type: "customer", note: "" });
+    setForm({ name: "", father_name: "", phone: "", national_id: "", email: "", address: "", type: "customer", note: "" });
     setModal(true);
   };
   const openEdit = (c: Customer) => {
     setEditing(c);
-    setForm({ name: c.name, phone: c.phone, address: c.address, type: c.type, note: c.note });
+    setForm({ name: c.name, father_name: c.father_name ?? "", phone: c.phone, national_id: c.national_id ?? "", email: c.email ?? "", address: c.address, type: c.type, note: c.note });
     setModal(true);
   };
 
@@ -139,7 +139,9 @@ export default function CustomersPage() {
         <div className="space-y-3">
           <Field label={t("name")} required><TextInput value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} autoFocus /></Field>
           <div className="grid grid-cols-2 gap-3">
+            <Field label={t("fatherName")}><TextInput value={form.father_name} onChange={(e) => setForm({ ...form, father_name: e.target.value })} /></Field>
             <Field label={t("phone")}><TextInput value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} dir="ltr" /></Field>
+            <Field label={t("nationalId")}><TextInput value={form.national_id} onChange={(e) => setForm({ ...form, national_id: e.target.value })} dir="ltr" /></Field>
             <Field label={t("customerType")}>
               <Select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
                 <option value="customer">{t("type_customer")}</option>
@@ -149,6 +151,7 @@ export default function CustomersPage() {
               </Select>
             </Field>
           </div>
+          <Field label={t("email")}><TextInput value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} dir="ltr" type="email" /></Field>
           <Field label={t("address")}><TextInput value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></Field>
           <Field label={t("note")}><TextInput value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} /></Field>
           <div className="flex justify-end gap-2 pt-2">

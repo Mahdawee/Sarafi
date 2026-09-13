@@ -5,6 +5,7 @@ import { ArrowLeftRight, Pencil, Plus, Trash2 } from "lucide-react";
 import { useLang } from "@/lib/i18n";
 import { apiDelete, apiGet, apiPost, apiPut } from "@/lib/api";
 import { formatDate, formatNumber, todayISO, parseNum } from "@/lib/format";
+import { useQuickEntry } from "@/lib/quick-entry";
 import type { Safe, SafeMovement, Transfer } from "@/lib/types";
 import { Badge, Btn, Card, Confirm, DateInput, Empty, Field, Modal, NumInput, PageHeader, Select, Spinner, Tbl, TextInput } from "@/components/ui";
 import { CurrencyPicker, SafePicker } from "@/components/pickers";
@@ -55,7 +56,16 @@ export default function SafesPage() {
     }
   }, [toast, t]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    const timer = window.setTimeout(() => { void load(); }, 0);
+    return () => window.clearTimeout(timer);
+  }, [load]);
+
+  const openTransfer = useCallback(() => {
+    setTEntry([{ ...blankT(), from_safe: safes[0]?.id ?? 0, to_safe: safes[1]?.id ?? 0 }]);
+    setTModal(true);
+  }, [safes]);
+  useQuickEntry("transfer", openTransfer);
 
   const openView = async (s: Safe) => {
     setViewSafe(s);
@@ -130,7 +140,7 @@ export default function SafesPage() {
             <Btn variant="secondary" onClick={() => { setSafeModal(true); setEditing(null); setForm({ name: "", type: "cash", account_no: "" }); }}>
               <Plus size={16} /> {t("newSafe")}
             </Btn>
-            <Btn onClick={() => { setTEntry([blankT()]); setTModal(true); }}><ArrowLeftRight size={16} /> {t("newTransfer")}</Btn>
+            <Btn onClick={openTransfer}><ArrowLeftRight size={16} /> {t("newTransfer")}</Btn>
           </>
         }
       />

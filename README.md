@@ -5,9 +5,10 @@ A complete bilingual (Dari/Farsi + English) money-exchange (Sarafi/Hawala) manag
 ## Features — امکانات
 
 - 📊 **Dashboard** — safe balances, today's stats, pending hawala, live rates (داشبورد)
-- 📤📥 **Send / Receive Hawala** — multi-row entry popup, pay/unpay/cancel, printable receipts (حواله ارسالی/دریافتی)
+- 📤📥 **Send / Receive Hawala** — two-sided account, currency, rate and commission entry; multi-row popup, pay/unpay/cancel, reversible cancellation and printable receipts (حواله ارسالی/دریافتی)
 - 🧾 **Receipts (Received/Pay entries)** — multi-row popup, one Save button (رسید دریافت/پرداخت چندسطره)
 - 📒 **Debit / Credit notes** — multi-row popup, one Save button (دبت/کردت چندسطره)
+- 📖 **General Journal & Trial Balance** — debit/credit postings across customer, agent, cash and bank accounts; per-currency trial balance (روزنامچه و ترازنامه)
 - 💱 **Currency Exchange** — buy/sell with automatic profit calc (خرید/فروش ارز)
 - 👥 **Customers** — agents/staff/company accounts, full statements per currency (مشتریان + صورت حساب)
 - 🏦 **Safes & Banks** — multi-currency balances, movements, transfers (صندوق‌ها + انتقالات)
@@ -40,4 +41,4 @@ npm start
 
 ## Tech
 
-Next.js App Router · TypeScript · Tailwind 4 · better-sqlite3 · Vazirmatn font · jalaali-js
+Next.js App Router · TypeScript · Tailwind 4 · better-sqlite3 · self-hosted Vazirmatn/Inter variable fonts · jalaali-js

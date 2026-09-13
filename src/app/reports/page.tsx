@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Printer } from "lucide-react";
 import { useLang } from "@/lib/i18n";
 import { apiGet } from "@/lib/api";
@@ -17,6 +18,7 @@ interface DailyData {
   exchanges: Record<string, unknown>[];
   expenses: Record<string, unknown>[];
   transfers: Record<string, unknown>[];
+  journal: Record<string, unknown>[];
 }
 
 const str = (v: unknown) => (v === null || v === undefined ? "" : String(v));
@@ -31,6 +33,7 @@ export default function ReportsPage() {
   const [profit, setProfit] = useState<ProfitReport | null>(null);
   const [daily, setDaily] = useState<DailyData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [printing, setPrinting] = useState(false);
 
   const loadProfit = async () => {
     setLoading(true);
@@ -50,12 +53,25 @@ export default function ReportsPage() {
   };
 
   useEffect(() => {
-    if (tab === "profit") loadProfit();
-    else loadDaily();
+    const timer = window.setTimeout(() => {
+      if (tab === "profit") void loadProfit();
+      else void loadDaily();
+    }, 0);
+    return () => window.clearTimeout(timer);
+    // Filters are intentionally applied by the explicit «نمایش گزارش» button.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
 
+  const printReport = () => {
+    setPrinting(true);
+    window.setTimeout(() => {
+      window.print();
+      window.setTimeout(() => setPrinting(false), 400);
+    }, 120);
+  };
+
   const dailySections: { key: keyof Omit<DailyData, "date">; title: string }[] = [
+    { key: "journal", title: t("journal") },
     { key: "sends", title: t("nav_hawala_send") },
     { key: "receives", title: t("nav_hawala_receive") },
     { key: "receipts", title: t("nav_receipts") },
@@ -79,7 +95,7 @@ export default function ReportsPage() {
                 { value: "daily", label: t("dailyReport") },
               ]}
             />
-            <Btn variant="secondary" onClick={() => window.print()}><Printer size={15} /> {t("print")}</Btn>
+            <Btn variant="secondary" onClick={printReport} disabled={tab === "profit" ? !profit : !daily}><Printer size={15} /> {t("print")}</Btn>
           </>
         }
       />
@@ -93,24 +109,26 @@ export default function ReportsPage() {
           </div>
           {loading ? <Spinner /> : !profit ? <Empty /> : (
             <>
-              <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+              <div className="grid grid-cols-2 gap-3 xl:grid-cols-5">
                 <ProfitCard label={t("totalFees")} value={profit.hawala_fees} color="bg-emerald-100 text-emerald-800" locale={locale} />
+                <ProfitCard label={t("paidCommissions")} value={-profit.paid_commissions} color="bg-orange-100 text-orange-800" locale={locale} negative />
                 <ProfitCard label={t("totalExchangeProfit")} value={profit.exchange_profit} color="bg-blue-100 text-blue-800" locale={locale} />
                 <ProfitCard label={t("totalExpenses")} value={-profit.expenses} color="bg-rose-100 text-rose-700" locale={locale} negative />
                 <ProfitCard label={t("netProfit")} value={profit.net} color={profit.net >= 0 ? "bg-teal-600 text-white" : "bg-rose-600 text-white"} locale={locale} big />
               </div>
               <Card title={`${t("dateRange")}: ${formatDate(profit.from, locale)} — ${formatDate(profit.to, locale)}`} className="mt-4">
-                <Tbl head={[t("currency"), t("totalFees"), t("totalExchangeProfit"), t("totalExpenses")]}>
+                <Tbl head={[t("currency"), t("totalFees"), t("paidCommissions"), t("totalExchangeProfit"), t("totalExpenses")]}>
                   {Object.entries(profit.by_currency).map(([cur, v]) => (
                     <tr key={cur}>
                       <td className="px-3 py-2 font-extrabold" dir="ltr">{cur}</td>
                       <td className="px-3 py-2 text-emerald-700" dir="ltr">{formatNumber(v.fees, locale)}</td>
+                      <td className="px-3 py-2 text-orange-700" dir="ltr">{formatNumber(v.paid_commission, locale)}</td>
                       <td className="px-3 py-2 text-blue-700" dir="ltr">{formatNumber(v.exchange, locale)}</td>
                       <td className="px-3 py-2 text-rose-600" dir="ltr">{formatNumber(v.expenses, locale)}</td>
                     </tr>
                   ))}
                 </Tbl>
-                <p className="mt-2 text-[11px] text-slate-400">{t("inAfn")}: {t("totalFees")} {formatMoney(profit.hawala_fees, "؋", locale)} • {t("totalExpenses")} {formatMoney(profit.expenses, "؋", locale)}</p>
+                <p className="mt-2 text-[11px] text-slate-400">{t("inAfn")}: {t("totalFees")} {formatMoney(profit.hawala_fees, "؋", locale)} • {t("paidCommissions")} {formatMoney(profit.paid_commissions, "؋", locale)} • {t("totalExpenses")} {formatMoney(profit.expenses, "؋", locale)}</p>
               </Card>
             </>
           )}
@@ -135,7 +153,7 @@ export default function ReportsPage() {
                         <tr key={i}>
                           <td className="whitespace-nowrap px-3 py-2 font-mono text-xs" dir="ltr">{str(r.voucher_no)}</td>
                           <td className="px-3 py-2 text-xs">
-                            {[str(r.sender_name), str(r.receiver_name), str(r.customer_name), str(r.description), str(r.reason), str(r.note), str(r.category)].filter(Boolean).join(" • ") || "—"}
+                            {[str(r.sender_name), str(r.receiver_name), str(r.customer_name), str(r.debit_account_name), str(r.credit_account_name), str(r.description), str(r.reason), str(r.note), str(r.category)].filter(Boolean).join(" • ") || "—"}
                           </td>
                           <td className="whitespace-nowrap px-3 py-2 text-xs font-extrabold" dir="ltr">
                             {s.key === "exchanges"
@@ -152,6 +170,22 @@ export default function ReportsPage() {
             </div>
           )}
         </>
+      )}
+
+      {printing && createPortal(
+        <div id="print-root" dir={locale === "fa" ? "rtl" : "ltr"}>
+          <div className="print-doc">
+            <div className="print-head">
+              <h1>{tab === "profit" ? t("profitReport") : t("dailyReport")}</h1>
+              <p>{tab === "profit" && profit ? `${formatDate(profit.from, locale)} — ${formatDate(profit.to, locale)}` : daily ? formatDate(daily.date, locale) : ""}</p>
+            </div>
+            {tab === "profit" && profit && <>
+              <div className="print-meta"><span>{t("totalFees")}: <b>{formatMoney(profit.hawala_fees, "؋", locale)}</b></span><span>{t("netProfit")}: <b>{formatMoney(profit.net, "؋", locale)}</b></span></div>
+              <table className="print-table"><thead><tr><th>{t("currency")}</th><th>{t("totalFees")}</th><th>{t("paidCommissions")}</th><th>{t("totalExchangeProfit")}</th><th>{t("totalExpenses")}</th></tr></thead><tbody>{Object.entries(profit.by_currency).map(([currency, values]) => <tr key={currency}><td dir="ltr">{currency}</td><td>{formatNumber(values.fees, locale)}</td><td>{formatNumber(values.paid_commission, locale)}</td><td>{formatNumber(values.exchange, locale)}</td><td>{formatNumber(values.expenses, locale)}</td></tr>)}</tbody></table>
+            </>}
+            {tab === "daily" && daily && dailySections.map((section) => daily[section.key].length > 0 && <div key={section.key} style={{ marginTop: 12 }}><h3 style={{ fontSize: 14, margin: "0 0 5px" }}>{section.title}</h3><table className="print-table"><thead><tr><th>{t("voucherNo")}</th><th>{t("description")}</th><th>{t("amount")}</th></tr></thead><tbody>{daily[section.key].map((row, index) => <tr key={index}><td dir="ltr">{str(row.voucher_no)}</td><td>{[str(row.sender_name), str(row.receiver_name), str(row.customer_name), str(row.debit_account_name), str(row.credit_account_name), str(row.description), str(row.reason), str(row.note), str(row.category)].filter(Boolean).join(" • ") || "—"}</td><td dir="ltr">{section.key === "exchanges" ? `${formatMoney(num(row.foreign_amount), str(row.foreign_currency), locale)} = ${formatMoney(num(row.base_amount), "AFN", locale)}` : formatMoney(num(row.amount), str(row.currency), locale)}</td></tr>)}</tbody></table></div>)}
+          </div>
+        </div>, document.body
       )}
     </div>
   );

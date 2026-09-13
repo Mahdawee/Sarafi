@@ -1,10 +1,14 @@
 @import "tailwindcss";
 
+:root { color-scheme: light; }
+* { -webkit-tap-highlight-color: transparent; }
+html { background: #f4f7fb; }
+body { min-width: 320px; }
 html[lang="fa"] body {
-  font-family: var(--font-vazir), Tahoma, Arial, sans-serif;
+  font-family: "Vazirmatn Variable", Vazirmatn, Tahoma, Arial, sans-serif;
 }
 html[lang="en"] body {
-  font-family: var(--font-inter), Arial, sans-serif;
+  font-family: "Inter Variable", Inter, Arial, sans-serif;
 }
 
 ::-webkit-scrollbar { width: 8px; height: 8px; }

@@ -3,10 +3,9 @@
 import React, { useEffect, useState } from "react";
 import { Download, Plus, Trash2 } from "lucide-react";
 import { useLang } from "@/lib/i18n";
-import { apiDelete, apiGet, apiPost, apiPut } from "@/lib/api";
-import { todayISO } from "@/lib/format";
+import { apiGet, apiPost, apiPut } from "@/lib/api";
 import type { CurrencyRate } from "@/lib/types";
-import { Btn, Card, Confirm, Field, Modal, NumInput, PageHeader, Spinner, TextInput } from "@/components/ui";
+import { Btn, Card, Field, Modal, NumInput, PageHeader, Spinner, TextInput } from "@/components/ui";
 import { useData, useToast } from "@/components/app-providers";
 
 export default function SettingsPage() {
@@ -41,7 +40,11 @@ export default function SettingsPage() {
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    const timer = window.setTimeout(() => { void load(); }, 0);
+    return () => window.clearTimeout(timer);
+    // Initial settings load only; saving/reloading is explicit.
+  }, []);
 
   const saveSettings = async () => {
     setSaving(true);

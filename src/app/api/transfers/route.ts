@@ -23,11 +23,12 @@ export async function POST(req: NextRequest) {
     if (!r.from_safe || !r.to_safe || r.from_safe === r.to_safe || !r.currency || !r.amount || r.amount <= 0)
       return NextResponse.json({ error: `Row ${i + 1}: invalid transfer` }, { status: 400 });
   }
-  const voucher_no = nextVoucher(db, "TR");
+  let voucher_no = "";
   const today = todayISO();
   const ids: number[] = [];
   const insert = db.prepare("INSERT INTO transfers (voucher_no, date, from_safe, to_safe, currency, amount, description) VALUES (?, ?, ?, ?, ?, ?, ?)");
   const tx = db.transaction(() => {
+    voucher_no = nextVoucher(db, "TR");
     for (const r of b.rows) {
       const date = r.date || today;
       const info = insert.run(voucher_no, date, r.from_safe, r.to_safe, r.currency, r.amount, r.description?.trim() ?? "");

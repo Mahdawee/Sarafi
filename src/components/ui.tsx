@@ -11,14 +11,14 @@ export function Btn({
   children: React.ReactNode; onClick?: () => void; variant?: "primary" | "secondary" | "danger" | "ghost" | "success" | "warning";
   size?: "sm" | "md" | "lg"; disabled?: boolean; type?: "button" | "submit"; className?: string; title?: string;
 }) {
-  const base = "inline-flex items-center justify-center gap-1.5 rounded-xl font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer select-none";
+  const base = "inline-flex items-center justify-center gap-1.5 rounded-xl font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer select-none active:scale-[.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2";
   const sizes = { sm: "px-3 py-1.5 text-xs", md: "px-4 py-2 text-sm", lg: "px-6 py-2.5 text-base" };
   const variants = {
-    primary: "bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm",
-    success: "bg-teal-600 text-white hover:bg-teal-700 shadow-sm",
-    secondary: "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200",
-    danger: "bg-rose-600 text-white hover:bg-rose-700 shadow-sm",
-    warning: "bg-amber-500 text-white hover:bg-amber-600 shadow-sm",
+    primary: "bg-gradient-to-l from-cyan-600 to-teal-600 text-white hover:from-cyan-700 hover:to-teal-700 shadow-sm shadow-cyan-200",
+    success: "bg-teal-600 text-white hover:bg-teal-700 shadow-sm shadow-teal-100",
+    secondary: "border border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50 shadow-sm",
+    danger: "bg-rose-600 text-white hover:bg-rose-700 shadow-sm shadow-rose-100",
+    warning: "bg-amber-500 text-white hover:bg-amber-600 shadow-sm shadow-amber-100",
     ghost: "text-slate-600 hover:bg-slate-100",
   };
   return (
@@ -33,10 +33,10 @@ export function Card({ children, className = "", title, action }: {
   children: React.ReactNode; className?: string; title?: React.ReactNode; action?: React.ReactNode;
 }) {
   return (
-    <div className={`rounded-2xl border border-slate-200 bg-white shadow-sm ${className}`}>
+    <div className={`rounded-2xl border border-slate-200/90 bg-white shadow-sm shadow-slate-200/60 ${className}`}>
       {(title || action) && (
-        <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
-          <h3 className="text-sm font-bold text-slate-800">{title}</h3>
+        <div className="flex items-center justify-between gap-2 border-b border-slate-100 bg-slate-50/50 px-4 py-3">
+          <h3 className="text-sm font-extrabold text-slate-800">{title}</h3>
           {action}
         </div>
       )}
@@ -60,7 +60,7 @@ export function Field({ label, children, required, className = "" }: {
 }
 
 const inputCls =
-  "w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 placeholder:text-slate-400";
+  "w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-cyan-500 focus:bg-white focus:ring-2 focus:ring-cyan-100 placeholder:text-slate-400";
 
 export function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return <input {...props} className={`${inputCls} ${props.className ?? ""}`} />;
@@ -126,14 +126,14 @@ export function Modal({ open, onClose, title, children, wide, footer }: {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6" dir="inherit">
       <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} />
       <div className={`relative flex max-h-[94vh] w-full flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ${wide ? "max-w-6xl" : "max-w-lg"}`}>
-        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3.5">
-          <h2 className="text-base font-bold text-slate-800">{title}</h2>
+        <div className="flex items-center justify-between border-b border-cyan-100 bg-gradient-to-l from-cyan-50/80 to-white px-5 py-3.5">
+          <h2 className="text-base font-extrabold text-slate-800">{title}</h2>
           <button onClick={onClose} className="cursor-pointer rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
             <X size={18} />
           </button>
         </div>
         <div className="flex-1 overflow-y-auto p-5">{children}</div>
-        {footer && <div className="border-t border-slate-100 bg-slate-50 px-5 py-3.5">{footer}</div>}
+        {footer && <div className="border-t border-cyan-100 bg-gradient-to-l from-slate-50 to-cyan-50/40 px-5 py-3.5">{footer}</div>}
       </div>
     </div>
   );
@@ -209,7 +209,7 @@ export function Segmented<T extends string>({ options, value, onChange }: {
           key={o.value}
           onClick={() => onChange(o.value)}
           className={`cursor-pointer rounded-lg px-4 py-1.5 text-sm font-semibold transition ${
-            value === o.value ? "bg-white text-emerald-700 shadow" : "text-slate-500 hover:text-slate-700"
+            value === o.value ? "bg-white text-cyan-700 shadow-sm" : "text-slate-500 hover:text-slate-700"
           }`}
         >
           {o.label}
@@ -225,9 +225,9 @@ export function Tbl({ head, children, className = "" }: { head: React.ReactNode[
     <div className={`overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm ${className}`}>
       <table className="w-full min-w-[640px] text-sm">
         <thead>
-          <tr className="border-b border-slate-100 bg-slate-50/80 text-xs text-slate-500">
+          <tr className="border-b border-teal-700 bg-gradient-to-l from-teal-700 to-cyan-700 text-xs text-white">
             {head.map((h, i) => (
-              <th key={i} className="whitespace-nowrap px-3 py-2.5 text-start font-semibold">{h}</th>
+              <th key={i} className="whitespace-nowrap px-3 py-2.5 text-start font-bold">{h}</th>
             ))}
           </tr>
         </thead>

@@ -5,6 +5,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { useLang, type DictKey } from "@/lib/i18n";
 import { apiDelete, apiGet, apiPost } from "@/lib/api";
 import { formatDate, formatMoney, parseNum, todayISO } from "@/lib/format";
+import { useQuickEntry } from "@/lib/quick-entry";
 import type { Expense } from "@/lib/types";
 import { Btn, Confirm, DateInput, Empty, Field, NumInput, PageHeader, SearchBox, Select, Spinner, Tbl, TextInput } from "@/components/ui";
 import { CurrencyPicker, SafePicker } from "@/components/pickers";
@@ -46,6 +47,12 @@ export default function ExpensesPage() {
     const timer = setTimeout(load, 250);
     return () => clearTimeout(timer);
   }, [load]);
+
+  const openModal = useCallback(() => {
+    setEntry([{ ...blank(), safe_id: safes[0]?.id ?? 0 }]);
+    setModal(true);
+  }, [safes]);
+  useQuickEntry("expense", openModal);
 
   const submit = async () => {
     for (const [i, r] of entry.entries()) {
@@ -93,7 +100,7 @@ export default function ExpensesPage() {
       <PageHeader
         title={t("nav_expenses")}
         sub={t("multiHint")}
-        actions={<Btn onClick={() => { setEntry([{ ...blank(), safe_id: safes[0]?.id ?? 0 }]); setModal(true); }}><Plus size={16} /> {t("newExpense")}</Btn>}
+        actions={<Btn onClick={openModal}><Plus size={16} /> {t("newExpense")}</Btn>}
       />
       <div className="mb-3"><SearchBox value={q} onChange={setQ} className="max-w-md" /></div>
 

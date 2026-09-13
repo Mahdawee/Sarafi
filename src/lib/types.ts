@@ -8,6 +8,9 @@ export interface Customer {
   name: string;
   phone: string;
   address: string;
+  father_name?: string;
+  national_id?: string;
+  email?: string;
   type: "customer" | "agent" | "staff" | "company";
   note: string;
   is_active: number;
@@ -61,6 +64,23 @@ export interface Hawala {
   note: string;
   created_at: string;
   paid_at: string;
+  // Two-sided hawala information (compatible with the original currency/amount fields)
+  sent_currency?: string;
+  sent_amount?: number;
+  received_currency?: string;
+  received_amount?: number;
+  exchange_rate?: number;
+  from_account_type?: AccountType | "";
+  from_account_id?: number;
+  to_account_type?: AccountType | "";
+  to_account_id?: number;
+  received_commission?: number;
+  paid_commission?: number;
+  commission_currency?: string;
+  payment_method?: "cash" | "account";
+  verification_status?: "confirmed" | "pending";
+  from_account_name?: string;
+  to_account_name?: string;
 }
 
 export type ReceiptKind = "receive" | "pay";
@@ -171,6 +191,43 @@ export interface SafeMovement {
   created_at: string;
 }
 
+export type AccountType = "customer" | "safe";
+
+export interface AccountRef {
+  type: AccountType;
+  id: number;
+}
+
+export interface JournalEntry {
+  id: number;
+  voucher_no: string;
+  date: string;
+  debit_account_type: AccountType;
+  debit_account_id: number;
+  debit_account_name?: string;
+  credit_account_type: AccountType;
+  credit_account_id: number;
+  credit_account_name?: string;
+  currency: string;
+  amount: number;
+  description: string;
+  is_commission: number;
+  is_suspicious: number;
+  created_at: string;
+}
+
+export interface TrialBalanceRow {
+  account_type: AccountType;
+  account_id: number;
+  code: string;
+  name: string;
+  detail_type: string;
+  currency: string;
+  debit: number;
+  credit: number;
+  balance: number;
+}
+
 export interface DashboardData {
   safes: { id: number; name: string; type: string; balances: Record<string, number> }[];
   rates: CurrencyRate[];
@@ -182,6 +239,7 @@ export interface DashboardData {
     expenses_afn: number;
     fees_afn: number;
   };
+  day_currency_totals: Record<string, { sent: number; received: number; cash_in: number; cash_out: number; fees: number }>;
   pending: { send: Hawala[]; receive: Hawala[] };
   recent: { voucher_no: string; date: string; type: string; label: string; amount: number; currency: string }[];
   customerTotals: Record<string, { debit: number; credit: number }>;
@@ -197,8 +255,9 @@ export interface ProfitReport {
   from: string;
   to: string;
   hawala_fees: number;
+  paid_commissions: number;
   exchange_profit: number;
   expenses: number;
   net: number;
-  by_currency: Record<string, { fees: number; exchange: number; expenses: number }>;
+  by_currency: Record<string, { fees: number; paid_commission: number; exchange: number; expenses: number }>;
 }
